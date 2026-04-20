@@ -1,0 +1,14 @@
+{
+  "name": "github_linkedin_jobs_api_test",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Executable Node.js API test harness modeled after VishwaGauravIn/linkedin-jobs-api.",
+  "main": "linkedin_jobs_api_test.js",
+  "type": "commonjs",
+  "bin": {
+    "github-linkedin-jobs-api-test": "./linkedin_jobs_api_test.js"
+  },
+  "scripts": {
+    "terminal_test": "./linkedin_jobs_api_test.js --keyword \"data engineer\" --location \"Australia\" --limit 5 --pretty"
+  }
+}
