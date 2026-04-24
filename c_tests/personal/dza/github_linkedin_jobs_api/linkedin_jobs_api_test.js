@@ -4,8 +4,8 @@
 
 const SEARCH_URL =
   'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search';
-const DEFAULT_NUMBER_OF_POSTED_JOBS_PER_PAGE = 25;
-const DEFAULT_LIMIT = 10;
+const LINKEDIN_BATCH_SIZE = 25;
+const DEFAULT_LIMIT = 20;
 
 const DATE_SINCE_POSTED_MAP = {
   '1hr': 'r3600',
@@ -534,7 +534,10 @@ function parseJobsFromHtml(html) {
 
 function buildQueryOptions(rawOptions = {}) {
   const limit = Math.max(1, toPositiveInteger(rawOptions.limit, DEFAULT_LIMIT));
-  const page = toPositiveInteger(rawOptions.page, 0);
+  const start = toPositiveInteger(
+    rawOptions.start ?? rawOptions.offset ?? rawOptions.page,
+    0
+  );
   const options = {
     keyword: String(rawOptions.keyword ?? '').trim(),
     location: String(rawOptions.location ?? '').trim(),
@@ -545,7 +548,7 @@ function buildQueryOptions(rawOptions = {}) {
     experienceLevel: String(rawOptions.experienceLevel ?? '').trim(),
     sortBy: String(rawOptions.sortBy ?? '').trim(),
     limit,
-    page,
+    start,
     has_verification: normalizeBoolean(
       rawOptions.has_verification ?? rawOptions.hasVerification,
       false
@@ -561,6 +564,7 @@ function buildQueryOptions(rawOptions = {}) {
 
 function buildSearchUrl(rawOptions = {}, startOffset) {
   const options = buildQueryOptions(rawOptions);
+  const effectiveStart = toPositiveInteger(startOffset, options.start);
   const params = new URLSearchParams();
 
   if (options.keyword) {
@@ -571,7 +575,7 @@ function buildSearchUrl(rawOptions = {}, startOffset) {
     params.set('location', options.location);
   }
 
-  params.set('start', String(startOffset));
+  params.set('start', String(effectiveStart));
 
   const dateSincePosted = DATE_SINCE_POSTED_MAP[normalizeText(options.dateSincePosted)];
   if (dateSincePosted) {
@@ -629,14 +633,14 @@ async function fetchSearchBatch(rawOptions = {}, startOffset = 0) {
 
 async function query(rawOptions = {}) {
   const options = buildQueryOptions(rawOptions);
-  const startOffset = options.page * options.limit;
+  const startPosition = options.start;
   const requestedLimit = options.limit;
   const jobs = [];
   const seenUrls = new Set();
+  let nextStart = startPosition;
 
   while (jobs.length < requestedLimit) {
-    const batchStart = startOffset + jobs.length;
-    const { jobs: batchJobs } = await fetchSearchBatch(options, batchStart);
+    const { jobs: batchJobs } = await fetchSearchBatch(options, nextStart);
 
     if (batchJobs.length === 0) {
       break;
@@ -655,9 +659,11 @@ async function query(rawOptions = {}) {
       }
     }
 
-    if (batchJobs.length < DEFAULT_NUMBER_OF_POSTED_JOBS_PER_PAGE) {
+    if (batchJobs.length < LINKEDIN_BATCH_SIZE) {
       break;
     }
+
+    nextStart += LINKEDIN_BATCH_SIZE;
   }
 
   const trimmedJobs = jobs.slice(0, requestedLimit);
@@ -672,22 +678,26 @@ Options:
   --keyword <text>              Search keyword, e.g. "software engineer"
   --location <text>             Search location, e.g. "Australia"
   --dateSincePosted <value>     1hr, 24hr, past week, past month
+  --showUrl                     Print the generated search URL before the request
+  --limit <number>              Number of jobs to return, default 20
+  --start <number>              Zero-based starting job position, default 0
+  --offset <number>             Alias for --start
+  --page <number>               Deprecated alias for --start
+  --sortBy <value>              recent or relevant
+  
+  --pretty                      Pretty-print JSON output
   --jobType <value>             full time, part time, contract, temporary, volunteer, internship
   --remoteFilter <value>        on site, remote, hybrid
   --salary <value>              40000, 60000, 80000, 100000, 120000
   --experienceLevel <value>     internship, entry level, associate, senior, director, executive
-  --limit <number>              Number of jobs to return, default 10
-  --page <number>               Zero-based page number, default 0
-  --sortBy <value>              recent or relevant
   --hasVerification <boolean>   true or false
   --under10Applicants <boolean> true or false
-  --pretty                      Pretty-print JSON output
-  --showUrl                     Print the generated search URL before the request
   --help                        Show this help
 
 Examples:
-  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "software engineer" --location "Australia" --limit 5 --pretty
-  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data engineer" --location "Australia" --page 9 --pretty
+    Note: "--dateSincePosted "past week" affects the number of output entries.
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data" --location "Australia" --sortBy recent --start 0 --showUrl
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data" --location "Australia" --sortBy recent --start 0 --dateSincePosted "past week" --showUrl
   ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "product manager" --remoteFilter remote --sortBy recent --under10Applicants true --pretty
 `);
 }
@@ -735,7 +745,9 @@ function parseCliArgs(argv) {
       '--experienceLevel': 'experienceLevel',
       '--experience-level': 'experienceLevel',
       '--limit': 'limit',
-      '--page': 'page',
+      '--start': 'start',
+      '--offset': 'start',
+      '--page': 'start',
       '--sortBy': 'sortBy',
       '--sort-by': 'sortBy',
       '--hasVerification': 'has_verification',
@@ -773,14 +785,14 @@ async function main() {
     salary: cliOptions.salary,
     experienceLevel: cliOptions.experienceLevel,
     limit: cliOptions.limit,
-    page: cliOptions.page,
+    start: cliOptions.start,
     sortBy: cliOptions.sortBy,
     has_verification: cliOptions.has_verification,
     under_10_applicants: cliOptions.under_10_applicants,
   });
 
   if (cliOptions.showUrl) {
-    console.error(`Search URL: ${buildSearchUrl(runtimeOptions, runtimeOptions.page * runtimeOptions.limit)}`);
+    console.error(`Search URL: ${buildSearchUrl(runtimeOptions, runtimeOptions.start)}`);
   }
 
   const jobs = await query(runtimeOptions);

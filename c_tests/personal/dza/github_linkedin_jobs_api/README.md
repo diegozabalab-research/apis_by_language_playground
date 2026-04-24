@@ -4,7 +4,7 @@ Executable Node.js API test harness for the LinkedIn jobs search flow.
 
 ## What it does
 
-- Mirrors the option names documented in the upstream package README: `keyword`, `location`, `dateSincePosted`, `jobType`, `remoteFilter`, `salary`, `experienceLevel`, `limit`, `page`, `sortBy`, `has_verification`, and `under_10_applicants`
+- Mirrors the option names documented in the upstream package README, with a clearer zero-based `start` option for the LinkedIn result position: `keyword`, `location`, `dateSincePosted`, `jobType`, `remoteFilter`, `salary`, `experienceLevel`, `limit`, `start`, `sortBy`, `has_verification`, and `under_10_applicants`
 - Calls LinkedIn's public guest jobs search endpoint directly
 - Parses the returned HTML into job objects with the same top-level shape used by the upstream package README
 - Enriches each job with a `description` field fetched from the job detail page
@@ -14,7 +14,8 @@ Executable Node.js API test harness for the LinkedIn jobs search flow.
 
 ## Files
 
-- `linkedin_jobs_api_test.js`: executable CLI and reusable `query()` implementation
+- `linkedin_jobs_api_test.js`: executable CLI and reusable `query()` implementation for fetching a slice starting at a specific result position
+- `linkedin_jobs_api_all_pages.js`: executable CLI and reusable `queryAll()` implementation for fetching every batch starting at a specific result position
 - `package.json`: local Node entrypoint metadata
 
 ## Usage
@@ -24,6 +25,13 @@ From the repository root:
 ```bash
 cd c_tests/personal/dza/github_linkedin_jobs_api
 ./linkedin_jobs_api_test.js --keyword "software engineer" --location "Australia" --limit 5 --pretty
+```
+
+Fetch every available batch starting from a specific result position:
+
+```bash
+cd c_tests/personal/dza/github_linkedin_jobs_api
+./linkedin_jobs_api_all_pages.js --keyword "product manager" --remoteFilter remote --sortBy recent --start 50 --pretty
 ```
 
 Or via npm:
@@ -41,6 +49,8 @@ Show available flags:
 
 ## Notes
 
-- `page` is treated as a zero-based page offset using the requested `limit`, so `page=1` with `limit=10` starts at jobs 11-20.
+- `start` is a zero-based LinkedIn result position. For example, `start=0` begins at the first job and `start=5` begins at the sixth job.
+- `--page` is still accepted as a deprecated alias for `--start` so existing commands keep working.
+- `linkedin_jobs_api_all_pages.js` iterates in LinkedIn-sized 25-result batches until the search runs out of items.
 - The implementation is based on the upstream README option contract and publicly documented LinkedIn guest jobs endpoints and selectors.
 - LinkedIn can change its guest HTML structure or query parameters at any time, so this test harness is intentionally lightweight and easy to update.
