@@ -4,7 +4,7 @@
 
 const SEARCH_URL =
   'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search';
-const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_NUMBER_OF_POSTED_JOBS_PER_PAGE = 25;
 const DEFAULT_LIMIT = 10;
 
 const DATE_SINCE_POSTED_MAP = {
@@ -655,7 +655,7 @@ async function query(rawOptions = {}) {
       }
     }
 
-    if (batchJobs.length < DEFAULT_PAGE_SIZE) {
+    if (batchJobs.length < DEFAULT_NUMBER_OF_POSTED_JOBS_PER_PAGE) {
       break;
     }
   }
@@ -686,8 +686,9 @@ Options:
   --help                        Show this help
 
 Examples:
-  ./linkedin_jobs_api_test.js --keyword "software engineer" --location "Australia" --limit 5 --pretty
-  ./linkedin_jobs_api_test.js --keyword "product manager" --remoteFilter remote --sortBy recent --under10Applicants true --pretty
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "software engineer" --location "Australia" --limit 5 --pretty
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data engineer" --location "Australia" --page 9 --pretty
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "product manager" --remoteFilter remote --sortBy recent --under10Applicants true --pretty
 `);
 }
 
@@ -764,7 +765,7 @@ async function main() {
   }
 
   const runtimeOptions = buildQueryOptions({
-    keyword: cliOptions.keyword || 'software engineer',
+    keyword: cliOptions.keyword || '',
     location: cliOptions.location || 'Australia',
     dateSincePosted: cliOptions.dateSincePosted,
     jobType: cliOptions.jobType,
