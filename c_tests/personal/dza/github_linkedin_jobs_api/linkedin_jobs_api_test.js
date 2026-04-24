@@ -697,6 +697,7 @@ Options:
 Examples:
     Note: "--dateSincePosted "past week" affects the number of output entries.
   ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data" --location "Australia" --sortBy recent --start 0 --showUrl
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data" --location "Australia" --sortBy recent --start 0 --dateSincePosted "24hr" --showUrl
   ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "data" --location "Australia" --sortBy recent --start 0 --dateSincePosted "past week" --showUrl
   ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js --keyword "product manager" --remoteFilter remote --sortBy recent --under10Applicants true --pretty
 `);

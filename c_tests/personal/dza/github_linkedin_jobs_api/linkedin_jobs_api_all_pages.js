@@ -8,7 +8,10 @@ const {
   query,
 } = require('./linkedin_jobs_api_test');
 
-const LINKEDIN_BATCH_SIZE = 25;
+const SINGLE_ENTRY_LIMIT = 1;
+const MAX_ENTRY_COUNT = 999;
+const REQUESTS_PER_SLEEP = 10;
+const SLEEP_TIME_MS = 5000;
 const BOOLEAN_TRUE_VALUES = new Set(['1', 'true', 'yes', 'y', 'on']);
 const BOOLEAN_FALSE_VALUES = new Set(['0', 'false', 'no', 'n', 'off']);
 
@@ -57,6 +60,12 @@ function parseArgValue(args, index) {
   return args[index + 1];
 }
 
+function sleep(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
 function parseCliArgs(argv) {
   const args = argv.slice(2);
   const options = {};
@@ -101,8 +110,14 @@ function parseCliArgs(argv) {
       '--has-verification': 'has_verification',
       '--under10Applicants': 'under_10_applicants',
       '--under-10-applicants': 'under_10_applicants',
-      '--maxPages': 'maxPages',
-      '--max-pages': 'maxPages',
+      '--maxEntries': 'maxEntries',
+      '--max-entries': 'maxEntries',
+      '--maxRequests': 'maxRequests',
+      '--max-requests': 'maxRequests',
+      '--maxResults': 'maxEntries',
+      '--max-results': 'maxEntries',
+      '--maxPages': 'maxRequests',
+      '--max-pages': 'maxRequests',
     };
 
     const optionKey = keyMap[argument];
@@ -121,14 +136,26 @@ function buildWrapperOptions(rawOptions = {}) {
   const baseOptions = buildQueryOptions(rawOptions);
   return {
     ...baseOptions,
-    start: toPositiveInteger(
-      rawOptions.start ?? rawOptions.offset ?? rawOptions.page,
-      baseOptions.start
-    ),
-    maxPages:
+    start: 0,
+    maxEntries:
+      rawOptions.maxEntries === undefined &&
+      rawOptions.maxResults === undefined &&
+      rawOptions.maxRequests === undefined &&
       rawOptions.maxPages === undefined
         ? null
-        : Math.max(1, toPositiveInteger(rawOptions.maxPages, 1)),
+        : Math.min(
+            MAX_ENTRY_COUNT,
+            Math.max(
+              1,
+              toPositiveInteger(
+                rawOptions.maxEntries ??
+                  rawOptions.maxResults ??
+                  rawOptions.maxRequests ??
+                  rawOptions.maxPages,
+                MAX_ENTRY_COUNT
+              )
+            )
+          ),
     pretty: normalizeBoolean(rawOptions.pretty, false),
     showUrl: normalizeBoolean(rawOptions.showUrl, false),
   };
@@ -136,42 +163,30 @@ function buildWrapperOptions(rawOptions = {}) {
 
 async function queryAll(rawOptions = {}) {
   const options = buildWrapperOptions(rawOptions);
-  const startingPosition = options.start;
-  const maxPages = options.maxPages;
+  const maxEntries = options.maxEntries ?? MAX_ENTRY_COUNT;
   const allJobs = [];
-  const seenUrls = new Set();
-  let nextStart = startingPosition;
-  let fetchedBatchCount = 0;
+  let nextStart = 0;
+  let requestCount = 0;
 
-  while (maxPages === null || fetchedBatchCount < maxPages) {
-    const batchJobs = await query({
+  while (allJobs.length < maxEntries && nextStart < MAX_ENTRY_COUNT) {
+    const jobs = await query({
       ...options,
       start: nextStart,
-      limit: LINKEDIN_BATCH_SIZE,
+      limit: SINGLE_ENTRY_LIMIT,
     });
+    requestCount += 1;
+    const firstJob = jobs[0];
 
-    if (batchJobs.length === 0) {
+    if (!firstJob) {
       break;
     }
 
-    let newJobsInBatch = 0;
-    for (const job of batchJobs) {
-      if (!job || !job.jobUrl || seenUrls.has(job.jobUrl)) {
-        continue;
-      }
+    allJobs.push(firstJob);
+    nextStart += 1;
 
-      seenUrls.add(job.jobUrl);
-      allJobs.push(job);
-      newJobsInBatch += 1;
+    if (requestCount % REQUESTS_PER_SLEEP === 0) {
+      await sleep(SLEEP_TIME_MS);
     }
-
-    fetchedBatchCount += 1;
-
-    if (batchJobs.length < LINKEDIN_BATCH_SIZE || newJobsInBatch === 0) {
-      break;
-    }
-
-    nextStart += LINKEDIN_BATCH_SIZE;
   }
 
   return allJobs;
@@ -189,28 +204,33 @@ Options:
   --remoteFilter <value>        on site, remote, hybrid
   --salary <value>              40000, 60000, 80000, 100000, 120000
   --experienceLevel <value>     internship, entry level, associate, senior, director, executive
-  --start <number>              Zero-based starting job position, default 0
-  --offset <number>             Alias for --start
-  --page <number>               Deprecated alias for --start
+  --start <number>              Accepted for compatibility and ignored
+  --offset <number>             Accepted for compatibility and ignored
+  --page <number>               Accepted for compatibility and ignored
   --sortBy <value>              recent or relevant
   --hasVerification <boolean>   true or false
   --under10Applicants <boolean> true or false
-  --maxPages <number>           Optional safety cap on pages fetched
+  --maxEntries <number>         Optional cap on collected entries, max 999
+  --maxResults <number>         Alias for --maxEntries
+  --maxRequests <number>        Deprecated alias for --maxEntries
+  --maxPages <number>           Deprecated alias for --maxEntries
   --limit <number>              Accepted for compatibility and ignored by all-pages mode
   --pretty                      Pretty-print JSON output
   --showUrl                     Print the first generated search URL before requests
   --help                        Show this help
 
 Notes:
-  This wrapper fetches every available LinkedIn batch by repeatedly calling
-  linkedin_jobs_api_test.js with a fixed page size of 25. The --limit flag is
-  accepted for compatibility, but all-pages mode ignores it so iteration stays
-  aligned with LinkedIn's guest endpoint batch size.
+  This wrapper always begins at start position 0. It calls
+  linkedin_jobs_api_test.js with limit 1, keeps the first returned job,
+  discards the rest, increments start by 1, and repeats until no job is
+  returned or 999 entries have been collected. It also waits 5 seconds after
+  every 10 requests to reduce rate limiting. The --limit and --start flags are
+  accepted for compatibility, but ignored by all-pages mode.
 
 Examples:
-  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js --keyword "data engineer" --location "Australia" --pretty
-  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js --keyword "data" --start 0 --maxPages 5 --pretty
-  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js --keyword "product manager" --remoteFilter remote --sortBy recent --start 50 --maxPages 5 --pretty
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js --keyword "data engineer" --location "Australia"
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js --keyword "data" --maxEntries 5
+  ./c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js --keyword "data" --sortBy recent --dateSincePosted "24hr" --maxEntries 100
 `);
 }
 
@@ -235,6 +255,9 @@ async function main() {
     sortBy: cliOptions.sortBy,
     has_verification: cliOptions.has_verification,
     under_10_applicants: cliOptions.under_10_applicants,
+    maxEntries: cliOptions.maxEntries,
+    maxResults: cliOptions.maxResults,
+    maxRequests: cliOptions.maxRequests,
     maxPages: cliOptions.maxPages,
     pretty: cliOptions.pretty,
     showUrl: cliOptions.showUrl,
@@ -244,7 +267,7 @@ async function main() {
     console.error(
       `First batch URL: ${buildSearchUrl(
         runtimeOptions,
-        runtimeOptions.start
+        0
       )}`
     );
   }

@@ -31,7 +31,7 @@ Fetch every available batch starting from a specific result position:
 
 ```bash
 cd c_tests/personal/dza/github_linkedin_jobs_api
-./linkedin_jobs_api_all_pages.js --keyword "product manager" --remoteFilter remote --sortBy recent --start 50 --pretty
+./linkedin_jobs_api_all_pages.js --keyword "product manager" --remoteFilter remote --sortBy recent --maxEntries 100 --pretty
 ```
 
 Or via npm:
@@ -49,8 +49,10 @@ Show available flags:
 
 ## Notes
 
-- `start` is a zero-based LinkedIn result position. For example, `start=0` begins at the first job and `start=5` begins at the sixth job.
+- `start` is a zero-based LinkedIn result position for `linkedin_jobs_api_test.js`. For example, `start=0` begins at the first job and `start=5` begins at the sixth job.
 - `--page` is still accepted as a deprecated alias for `--start` so existing commands keep working.
-- `linkedin_jobs_api_all_pages.js` iterates in LinkedIn-sized 25-result batches until the search runs out of items.
+- `linkedin_jobs_api_all_pages.js` always starts at `start=0`, requests one item at a time, keeps only the first returned entry, increments `start` by 1, and stops when no entry is returned or 999 items have been collected.
+- `linkedin_jobs_api_all_pages.js` waits 5 seconds after every 10 requests to reduce `429 Too Many Requests` responses.
+- `--maxEntries` is the current safety cap option for the wrapper. `--maxResults`, `--maxRequests`, and `--maxPages` are accepted as compatibility aliases.
 - The implementation is based on the upstream README option contract and publicly documented LinkedIn guest jobs endpoints and selectors.
 - LinkedIn can change its guest HTML structure or query parameters at any time, so this test harness is intentionally lightweight and easy to update.
