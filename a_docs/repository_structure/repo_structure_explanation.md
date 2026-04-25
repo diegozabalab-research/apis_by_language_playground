@@ -48,7 +48,7 @@ This folder contains repository documentation and process-related notes.
 Current subfolders:
 
 - `a_docs/repo_structure_related/`: documents that explain how the repository is organized and how contributors should work inside it
-- `a_docs/agents/`: currently an empty placeholder, likely intended for agent-related guidance, workflows, prompts, or automation notes
+- `a_docs/agents/`: agent-related guidance, including language-specific clean-coding standards used for code generation and review
 
 At the moment, `a_docs/` functions as the operational knowledge area of the repository rather than application code.
 

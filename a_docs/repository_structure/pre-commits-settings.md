@@ -115,6 +115,16 @@ If additional MCPs become part of the team workflow, add them here with:
 
 The team should maintain a clear local process for creating and installing Codex skills.
 
+### Repository-Level Agent Instructions
+
+The repository-level default instructions for agent behavior must live in the root `AGENTS.md`.
+
+Current mandatory agent behavior for this repository:
+
+- Python code generation and Python code review must use `a_docs/agents/clean_code/python/general_clean_coding_standards_skill.md`
+- Node.js code generation and Node.js code review must use `a_docs/agents/clean_code/node_js/general_clean_coding_standards_skill_nodejs.md`
+- those standards are mandatory defaults for agent-driven create, refactor, and review tasks in their respective languages
+
 ### Recommended Local Skill Process
 
 1. Create a new skill directory under `$CODEX_HOME/skills/<skill_name>/`.

@@ -105,7 +105,7 @@ This wrapper is intentionally conservative. It prioritizes broad sequential extr
 Basic usage:
 
 ```bash
-../../../c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js \
+../../../c_tests/personal/dza/linkedin_jobs_api/linkedin_jobs_api_test.js \
   --keyword "product manager" \
   --location "Australia" \
   --start 0 \
@@ -116,7 +116,7 @@ Basic usage:
 Recent jobs example:
 
 ```bash
-../../../c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_test.js \
+../../../c_tests/personal/dza/linkedin_jobs_api/linkedin_jobs_api_test.js \
   --keyword "data" \
   --location "Australia" \
   --sortBy recent \
@@ -135,7 +135,7 @@ Notes:
 Basic usage with a normal LinkedIn job URL:
 
 ```bash
-../../../c_tests/personal/dza/github_linkedin_jobs_api/linkedin_single_job_api_test.js \
+../../../c_tests/personal/dza/linkedin_jobs_api/linkedin_single_job_api_test.js \
   --jobUrl "https://au.linkedin.com/jobs/view/junior-data-engineer-analyst-at-rassure-4403909274?position=1&pageNum=0&refId=Odtee%2BULy66fsL74IcQWbg%3D%3D&trackingId=SsmqDjxZmSvlXs%2FmboicTA%3D%3D" \
   --pretty
 ```
@@ -143,7 +143,7 @@ Basic usage with a normal LinkedIn job URL:
 Basic usage with a direct guest job posting URL:
 
 ```bash
-../../../c_tests/personal/dza/github_linkedin_jobs_api/linkedin_single_job_api_test.js \
+../../../c_tests/personal/dza/linkedin_jobs_api/linkedin_single_job_api_test.js \
   --jobUrl "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/4334080570" \
   --pretty
 ```
@@ -158,7 +158,7 @@ Notes:
 Basic usage:
 
 ```bash
-../../../c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js \
+../../../c_tests/personal/dza/linkedin_jobs_api/linkedin_jobs_api_all_pages.js \
   --keyword "product manager" \
   --remoteFilter remote \
   --sortBy recent \
@@ -169,7 +169,7 @@ Basic usage:
 Smaller capped crawl:
 
 ```bash
-../../../c_tests/personal/dza/github_linkedin_jobs_api/linkedin_jobs_api_all_pages.js \
+../../../c_tests/personal/dza/linkedin_jobs_api/linkedin_jobs_api_all_pages.js \
   --keyword "data engineer" \
   --location "Australia" \
   --maxEntries 20 \

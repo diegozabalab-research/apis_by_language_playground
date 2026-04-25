@@ -23,21 +23,21 @@ Executable Node.js API test harness for the LinkedIn jobs search flow.
 From the repository root:
 
 ```bash
-cd c_tests/personal/dza/github_linkedin_jobs_api
+cd c_tests/personal/dza/linkedin_jobs_api
 ./linkedin_jobs_api_test.js --keyword "software engineer" --location "Australia" --limit 5 --pretty
 ```
 
 Fetch every available batch starting from a specific result position:
 
 ```bash
-cd c_tests/personal/dza/github_linkedin_jobs_api
+cd c_tests/personal/dza/linkedin_jobs_api
 ./linkedin_jobs_api_all_pages.js --keyword "product manager" --remoteFilter remote --sortBy recent --maxEntries 100 --pretty
 ```
 
 Or via npm:
 
 ```bash
-cd c_tests/personal/dza/github_linkedin_jobs_api
+cd c_tests/personal/dza/linkedin_jobs_api
 npm start -- --keyword "product manager" --remoteFilter remote --sortBy recent --limit 5 --pretty
 ```
 

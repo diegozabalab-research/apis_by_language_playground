@@ -11,8 +11,11 @@ Primary reference:
 
 Use these documents for repository-specific conventions and structure:
 
-- [Repository Structure Explanation](a_docs/repo_structure_related/repo_structure_explanation.md)
-- [Pre-Commit, Branching, and Local Tooling Settings](a_docs/repo_structure_related/pre-commits-settings.md)
+- [Agent Instructions](AGENTS.md)
+- [Repository Structure Explanation](a_docs/repository_structure/repo_structure_explanation.md)
+- [Pre-Commit, Branching, and Local Tooling Settings](a_docs/repository_structure/pre-commits-settings.md)
+- [Python Clean Coding Standards](a_docs/agents/clean_code/python/general_clean_coding_standards_skill.md)
+- [Node.js Clean Coding Standards](a_docs/agents/clean_code/node_js/general_clean_coding_standards_skill_nodejs.md)
 
 ## License
 
